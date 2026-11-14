@@ -1,4 +1,3 @@
-# Parkinson-classifier-saas-architecture
 # Cloud ML SaaS – Parkinson’s Disease Classification (Track 2)
 
 ## 1. Selected Track and Project Objective
