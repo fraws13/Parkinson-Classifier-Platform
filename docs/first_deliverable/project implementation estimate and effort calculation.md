@@ -21,7 +21,7 @@ Per evitare colli di bottiglia nella fase di deploy, l'effort è bilanciato su t
 | Area / Ruolo           | Quota    | Pacchetti Inclusi (Task A–H)                                                                                                                                                                                                             | Ore Stimate   |
 | ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | **ML Engineer**        | **~20%** | **Task A:** pipeline offline (imputazione, scaling, feature selection, CV sui fold), serializzazione (`joblib`), contratto I/O per `/predict`.                                                                                           | **16–22 h**   |
-| **App Developer**      | **~40%** | **Task B:** Web App monolitica (form feature, auth con 3 ruoli, isolamento dati per medico, 1 DB), integrazione modello e audit log minimo.                                                                                              | **40–50 h**   |
+| **App Developer**      | **~40%** | **Task B:** Web App monolitica (form feature, auth con 2 ruoli, isolamento dati per medico, 1 DB), integrazione modello e audit log minimo.                                                                                              | **40–50 h**   |
 | **Platform & SecOps**  | **~40%** | Studio Docker/K8s (30–40 h) + **Task C** Container (10–14 h) + **Task D+E** Scout e patch CVE (12–16 h) + **Task F+H** Cluster locale (1 control + ≥1 worker) e NGINX TLS/rate-limit (30–40 h) + **Task G** `wrk` stress test (10–12 h). | **92–122 h**  |
 | **Trasversale (Team)** | —        | Integrazione end-to-end e debug (20–28 h) + Relazione tecnica, script demo (8–10 min) e tracciamento log AI (24–30 h).                                                                                                                   | **44–58 h**   |
 | **Totale Progetto**    | **100%** | —                                                                                                                                                                                                                                        | **210–240 h** |
@@ -37,7 +37,7 @@ Per rispettare il budget orario senza sacrificare la completezza progettuale ric
 
 - **Da implementare realmente (MVP locale A–H):**
 - Applicazione web unica (frontend form + API backend) con **1 database** relazionale.
-- Autenticazione **RBAC a 3 ruoli** (operatore/infermiere, medico locale, amministratore) con isolamento rigoroso dei pazienti per singolo medico.
+- Autenticazione **RBAC a 2 ruoli** (medico locale, amministratore) con isolamento rigoroso dei pazienti per singolo medico.
 - Pipeline ML addestrata offline, serializzata e servita tramite endpoint `/predict`.
 - Containerizzazione su **Docker Desktop**, scansione e remediation vulnerabilità con **Docker Scout**, deploy su cluster **Kubernetes** locale (1 control plane + almeno 1 worker).
 - Reverse proxy **NGINX** configurato per terminazione **TLS** e **rate limiting**, validato tramite benchmark **wrk**.
@@ -57,4 +57,3 @@ Per rispettare il budget orario senza sacrificare la completezza progettuale ric
 4. **Settimana 4 (Consolidamento e Demo):** stesura relazione tecnica con analisi dei limiti tra test locale su laptop e SLA cloud (5.000 req/min), verifica log AI del team e prove cronometrate della demo (8–10 minuti) includendo simulazione di guasto pod e verifica *before/after* di Scout.
 
 **Mitigazioni critiche attive fin dal giorno 1:** uso dello stub ML nella prima settimana per non bloccare lo sviluppo dell'app in attesa del dataset; avvio immediato dello studio su Kubernetes da parte del referente Platform; allocazione di 1–2 giorni di buffer per risolvere eventuali CVE non banali rilevate da Docker Scout.
-
