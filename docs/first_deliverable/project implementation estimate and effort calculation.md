@@ -1,59 +1,59 @@
-## 1. Sintesi Esecutiva: Capacità e Orizzonte Temporale
+## 1. Executive Summary: Capacity and Timeframe
 
-L'effort complessivo stimato per completare l'intero ciclo operativo (**Task A–H**), la relazione tecnica e la demo finale ammonta a **210–240 ore-persona** (target operativo: **220 ore**), calcolato su una capacità produttiva del team di **75–80 ore/settimana** (~25–27 ore settimanali per ciascuno dei 3 componenti).
-
-
-| Orizzonte                     | Capacità Team | Effort Atteso | Margine / Buffer  | Fattibilità                                                                         |
-| ----------------------------- | ------------- | ------------- | ----------------- | ----------------------------------------------------------------------------------- |
-| **4 Settimane (Consigliato)** | 300–320 h     | 210–240 h     | **~80 h (~25%)**  | **Alta:** assorbe la curva di apprendimento su Kubernetes e il patching CVE.        |
-| **3 Settimane (Compresso)**   | 225–240 h     | 210–240 h     | **~0–15 h (<5%)** | **Critica:** richiede dataset disponibile dal giorno 1 e tagli drastici allo scope. |
+The total estimated effort to complete the entire operational cycle (**Tasks A–H**), the technical report, and the final demo amounts to **210–240 person-hours** (operational target: **220 hours**), based on a production capacity of **13 hours per week for each of the 3 team members** (**~39 team-hours/week**).
 
 
----
+| Timeframe                 | Team Capacity | Expected Effort | Margin / Buffer               | Feasibility                                                                                           |
+| ------------------------- | ------------- | --------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **5 Weeks (Recommended)** | 195 h         | 210–240 h       | **−15 / −45 h (~−7/−19%)**    | **Moderate:** feasible only with a strict MVP scope and full parallel execution; no buffer available. |
+| **4 Weeks (Compressed)**  | 156 h         | 210–240 h       | **−54 ​​/ −84 h (~−25/−35%)** | **Critical:** requires further scope reduction and immediate availability of datasets from Day 1.     |
 
 
-
-## 2. Ripartizione dei Ruoli e Stima per Pacchetti
-
-Per evitare colli di bottiglia nella fase di deploy, l'effort è bilanciato su tre aree di responsabilità parallele con un punto di integrazione obbligatorio a metà della seconda settimana:
-
-
-| Area / Ruolo           | Quota    | Pacchetti Inclusi (Task A–H)                                                                                                                                                                                                             | Ore Stimate   |
-| ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| **ML Engineer**        | **~20%** | **Task A:** pipeline offline (imputazione, scaling, feature selection, CV sui fold), serializzazione (`joblib`), contratto I/O per `/predict`.                                                                                           | **16–22 h**   |
-| **App Developer**      | **~40%** | **Task B:** Web App monolitica (form feature, auth con 2 ruoli, isolamento dati per medico, 1 DB), integrazione modello e audit log minimo.                                                                                              | **40–50 h**   |
-| **Platform & SecOps**  | **~40%** | Studio Docker/K8s (30–40 h) + **Task C** Container (10–14 h) + **Task D+E** Scout e patch CVE (12–16 h) + **Task F+H** Cluster locale (1 control + ≥1 worker) e NGINX TLS/rate-limit (30–40 h) + **Task G** `wrk` stress test (10–12 h). | **92–122 h**  |
-| **Trasversale (Team)** | —        | Integrazione end-to-end e debug (20–28 h) + Relazione tecnica, script demo (8–10 min) e tracciamento log AI (24–30 h).                                                                                                                   | **44–58 h**   |
-| **Totale Progetto**    | **100%** | —                                                                                                                                                                                                                                        | **210–240 h** |
-
+**Note on the gap:** At 13 hours per person per week, the capacity does not fully cover the 220-hour target. The plan remains sustainable only by applying the scoping strategy outlined in Section 3 (focusing on an MVP for tasks A–H, while other components are limited to the design phase) and by ensuring that tasks on the critical path are executed in parallel.
 
 ---
 
 
 
-## 3. Strategia di Scope: Implementazione vs. Architettura
+## 2. Role Distribution and Work Package Estimates
 
-Per rispettare il budget orario senza sacrificare la completezza progettuale richiesta dal corso, il sistema viene diviso tra componenti eseguiti realmente in locale e componenti modellati solo a livello architetturale:
+To prevent bottlenecks during the deployment phase, the effort is balanced across three parallel areas of responsibility, with a mandatory integration milestone scheduled for the middle of the second week:
 
-- **Da implementare realmente (MVP locale A–H):**
-- Applicazione web unica (frontend form + API backend) con **1 database** relazionale.
-- Autenticazione **RBAC a 2 ruoli** (medico locale, amministratore) con isolamento rigoroso dei pazienti per singolo medico.
-- Pipeline ML addestrata offline, serializzata e servita tramite endpoint `/predict`.
-- Containerizzazione su **Docker Desktop**, scansione e remediation vulnerabilità con **Docker Scout**, deploy su cluster **Kubernetes** locale (1 control plane + almeno 1 worker).
-- Reverse proxy **NGINX** configurato per terminazione **TLS** e **rate limiting**, validato tramite benchmark **wrk**.
-- **Solo a livello architetturale e di relazione (non costruire):**
-- Scomposizione in 4 microservizi separati, 3 database dedicati, cifratura *mTLS East-West*, agente *Automated Scaling Listener* custom, replica database *Primary-Replica* con failover automatico e *SLA Monitor* dedicato.
-- **Regola di tracciabilità:** ogni blocco del diagramma architetturale verrà classificato esplicitamente in relazione come ***implementato***, ***approssimato*** o ***progettato***.
+
+| Area / Role                 | Share    | Included Packages (Tasks A–H)                                                                                                                                                                                                                                                        | Estimated Hours |
+| --------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- |
+| **ML Engineer**             | **~20%** | **Task A:** Offline pipeline (imputation, scaling, feature selection, cross-validation across folds), serialization (`joblib`), I/O contract for `/predict`.                                                                                                                         | **16–22 h**     |
+| **App Developer**           | **~40%** | **Task B:** Monolithic web app (feature input form, authentication with 2 roles, data isolation per physician, 1 database), model integration, and basic audit logging.                                                                                                              | **40–50 h**     |
+| **Platform & SecOps**       | **~40%** | Docker/K8s study (30–40 h) + **Task C:** Containerization (10–14 h) + **Tasks D+E:** CVE scanning and patching (12–16 h) + **Tasks F+H:** Local cluster setup (1 control plane + ≥1 worker node) and NGINX TLS/rate-limiting (30–40 h) + **Task G:** `wrk` stress testing (10–12 h). | **92–122 h**    |
+| **Cross-functional (Team)** | —        | End-to-end integration and debugging (20–28 h) + Technical report, demo scripts (8–10 min), and AI log tracking (24–30 h).                                                                                                                                                           | **44–58 h**     |
+| **Project Total**           | **100%** | —                                                                                                                                                                                                                                                                                    | **210–240 h**   |
+
+
+---## 3. Scope Strategy: Implementation vs. Architecture
+
+To adhere to the time budget without compromising the project comprehensiveness required by the course, the system is divided into components that are actually implemented locally and components that are modeled solely at an architectural level:
+
+- **To be implemented (Local MVP A–H):**
+- A unified web application (frontend form + backend API) with **1** relational database.
+- **2-role RBAC** authentication (local physician, administrator) with strict patient isolation per individual physician.
+- An ML pipeline trained offline, serialized, and served via a `/predict` endpoint.
+- Containerization using **Docker Desktop**, vulnerability scanning and remediation via **Docker Scout**, and deployment to a local **Kubernetes** cluster (1 control plane + at least 1 worker).
+- An **NGINX** reverse proxy configured for **TLS** termination and **rate limiting**, validated through **wrk** benchmarking.
+- **Architectural/Relational modeling only (not to be built):**
+- Decomposition into separate microservices (beyond the MVP scope), *mTLS* (East-West) encryption, a custom *Automated Scaling Listener* agent, *Primary-Replica* database replication with automatic failover, a dedicated *SLA Monitor*, advanced resource pooling/elastic capacity, and full-scale continuous training.
+- **Traceability rule:** Every block in the architectural diagram will be explicitly classified as ***implemented***, ***approximated***, or ***designed***.
 
 ---
 
 
 
-## 4. Roadmap a 4 Settimane e Gestione dei Rischi
+## 4. 5-Week Roadmap and Risk Management
 
-1. **Settimana 1 (Scheletro Parallelo):** definizione del contratto JSON delle feature e stub `predict()` (ML); login, ruoli, form e salvataggio su DB (App); setup Docker Desktop, primo Dockerfile e test di un Deployment base su K8s (Platform).
-2. **Settimana 2 (Modello Reale e Sicurezza Base):** addestramento su dataset reale e sostituzione dello stub con il modello `.joblib` (ML); segregazione dati tra medici e audit log (App); containerizzazione completa dello stack con NGINX davanti (Platform).
-3. **Settimana 3 (Hardening, Cluster e Stress Test):** scansione Docker Scout e applicazione patch (D+E); deploy su cluster K8s multi-nodo locale (F+H); esecuzione test di carico con `wrk` e raccolta metriche/screenshot (G).
-4. **Settimana 4 (Consolidamento e Demo):** stesura relazione tecnica con analisi dei limiti tra test locale su laptop e SLA cloud (5.000 req/min), verifica log AI del team e prove cronometrate della demo (8–10 minuti) includendo simulazione di guasto pod e verifica *before/after* di Scout.
+1. **Week 1 (Parallel Skeleton):** Definition of the JSON feature contract and `predict()` stub (ML); login, roles, forms, and database persistence (App); Docker Desktop setup, initial Dockerfile, and testing of a basic deployment on K8s (Platform). 2. **Week 2 (Real-world Model and Basic Security):** Training on a real-world dataset and replacing the stub with the actual `.joblib` (ML) model; data segregation between physicians and audit logs (App); full containerization of the stack with NGINX as a front-end (Platform).
+2. **Week 3 (Hardening and Clustering):** Docker Scout scanning and patch application (D+E); deployment to a local multi-node Kubernetes (K8s) cluster (F+H).
+3. **Week 4 (Stress Testing and Integration):** Running load tests using `wrk` and collecting metrics/screenshots (G); finalizing end-to-end integration and addressing high-priority bug fixes.
+4. **Week 5 (Consolidation and Demo):** Drafting a technical report analyzing the limitations—comparing local laptop-based testing against cloud SLAs (5,000 req/min)—reviewing AI logs, and conducting timed dry runs of the demo (8–10 minutes), including a pod-failure simulation and a *before/after* verification using Docker Scout.
 
-**Mitigazioni critiche attive fin dal giorno 1:** uso dello stub ML nella prima settimana per non bloccare lo sviluppo dell'app in attesa del dataset; avvio immediato dello studio su Kubernetes da parte del referente Platform; allocazione di 1–2 giorni di buffer per risolvere eventuali CVE non banali rilevate da Docker Scout.
+**4-Week Variant:** Weeks 3 and 4 are merged (combining hardening, clustering, `wrk` testing, and integration into a single week), and the buffer time for the demo is reduced. This approach is only feasible if the dataset is already available and further non-essential tasks are cut (e.g., a scaled-down demo or fewer iterations of CVE patching).
+
+**Critical Mitigations (Active from Day 1):** Using an ML stub during the first week to prevent application development from stalling while awaiting the dataset; immediate initiation of Kubernetes research by the Platform lead; allocation of buffer time to address complex CVEs identified by Docker Scout; and prioritizing the A–H MVP components over features that are currently only in the design phase.
