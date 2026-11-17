@@ -33,10 +33,10 @@ La **Subnet Pubblica** costituisce l'unico punto di contatto esposto verso Inter
 
 ### 2.3 Livello di Ingresso ed Elasticità (Subnet Privata)
 
-Tutto il traffico che supera il perimetro pubblico entra nella **Subnet Privata**, una rete completamente isolata dall'esterno in cui ogni comunicazione interna (*East-West traffic*) è cifrata tramite **Mutual TLS (mTLS)**:
+Tutto il traffico che supera il perimetro pubblico entra nella **Subnet Privata**, una rete completamente isolata dall'esterno in cui ogni comunicazione interna è cifrata tramite **Mutual TLS (mTLS)**:
 
 - **Automated Scaling Listener (ASL):** Implementa il meccanismo formale di *Service Agent*. Posizionato direttamente lungo il percorso di comunicazione tra il Load Balancer e l'API Gateway, intercetta e misura in tempo reale il volume del traffico durante la fascia operativa (**Lun–Ven, 08:00–18:00**). Al superamento delle soglie di carico attiva lo *Scaling Out* (creazione di nuove istanze) e, al rientro del picco, lo *Scaling In* (rilascio delle risorse in eccesso).
-- **API Gateway:** Funge da punto di ingresso unico (*Single Entry Point*) per l'ecosistema dei microservizi. Svolge funzioni di routing delle richieste verso i servizi di backend, aggregazione delle risposte, enforcement delle politiche di sicurezza mTLS e validazione preliminare dei token di sessione.
+- **API Gateway:** Funge da punto di ingresso unico (*Single Entry Point*) per l'ecosistema dei microservizi. Svolge funzioni di routing delle richieste verso i servizi di backend, aggregazione delle risposte, rafforzamento delle politiche di sicurezza mTLS e validazione preliminare dei token di sessione.
 
 
 
@@ -44,9 +44,9 @@ Tutto il traffico che supera il perimetro pubblico entra nella **Subnet Privata*
 
 La logica applicativa è scomposta in microservizi disaccoppiati, ciascuno dotato di bilanciamento interno (*Internal Load Balancing*):
 
-- **Frontend UI Service:** Eroga l'interfaccia web dell'applicazione, consentendo al medico di inserire i parametri cinematici/grafomotori dei **tre task selezionati**, visualizzare l'esito della classificazione e registrare il feedback clinico (conferma o correzione della predizione).
+- **Frontend UI Service:** Eroga l'interfaccia web dell'applicazione, consentendo al medico di inserire i parametri cinematici/grafomotori dei **task selezionati**, visualizzare l'esito della classificazione e registrare il feedback clinico (conferma o correzione della predizione).
 - **Clinical Core & Auth Service:** Backend transazionale unico che unisce autenticazione, RBAC e dominio clinico. Gestisce emissione/verifica dei token di sessione, ruoli, **Doctor-Patient Ownership**, acquisizione dei soli task ammessi, profili pazienti, referti, consulti, feedback di errore/validazione e **Patient Migration**. Ogni query clinica risolve autenticazione, ruolo e titolarità nello stesso processo e sulla stessa transazione del **Clinical & Identity DB**. In caso di riassegnazione o pensionamento, una singola oparazione di aggiornamento atomica trasferisce la ownership: il medico uscente perde **istantaneamente** ogni privilegio di lettura. Espone inoltre i casi clinicamente confermati necessari al Retraining Worker.
-- **ML Inference Service (Stateless):** Microservizio dedicato esclusivamente al calcolo predittivo online. Opera in modalità *stateless*: per ogni richiesta carica il modello attivo dal **Model Registry**, applica la pipeline (`Imputation`, `Scaling`, **Filter Feature Selection**) e produce la predizione binaria (soggetto sano vs paziente Parkinson) con la relativa probabilità. Non esegue addestramento; resta disponibile durante gli aggiornamenti del modello.
+- **ML Inference Service (Stateless):** Microservizio dedicato esclusivamente al calcolo predittivo online. Opera in modalità *stateless*: per ogni richiesta carica il modello attivo dal **Model Registry**, applica la pipeline sui i dati inseriti dal medico e produce la predizione binaria (soggetto sano vs paziente Parkinson) con la relativa probabilità. Non esegue addestramento; resta disponibile durante gli aggiornamenti del modello.
 - **Retraining Worker (Asincrono):** Componente di background, disaccoppiato dal percorso sincrono di inferenza. Si attiva quando il tasso di errore clinicamente segnalato/validato supera la soglia configurata (es. **> 5%**). Unisce lo storico di training ai nuovi casi confermati, riesegue la pipeline sui **tre task** con **Filter Feature Selection**, serializza un nuovo bundle e lo pubblica nel **Model Registry** con sostituzione a caldo (*hot-swap*), senza interrompere le istanze di inferenza online.
 
 
@@ -147,7 +147,6 @@ Rispetto alle architetture di elasticità del Cap. 11, il progetto adotta solo i
 **Resource Pooling (adottato)**
 Le risorse di compute della Subnet Privata sono organizzate in pool distinti: un pool dedicato al percorso sincrono (API Gateway, Clinical Core & Auth, ML Inference) e un pool dedicato al Retraining Worker. La segregazione garantisce che i job di continuous training non sottraggano CPU/RAM al path online, preservando la latenza ≤ 1 secondo e lo SLA in fascia Lun–Ven 08:00–18:00.
 
-
 **Elastic Resource Capacity (adottato in modo selettivo)**
 Sul path online si conferma lo scaling out/in orizzontale guidato dall’ASL. Sul Retraining Worker, invece, si adotta capacità elastica verticale: per la durata del job (cross-validation e filter feature selection) si allocano CPU/RAM aggiuntive dal sub-pool batch, rilasciandole a fine addestramento. La scelta deriva dalla natura single-job/batch del retraining, non dalla volontà di moltiplicare repliche stateless.
 
@@ -156,4 +155,3 @@ Il volume di dati applicativi (vettori dei tre task, bundle del Model Registry, 
 
 **Cloud Bursting (escluso)**
 Non si adotta un’architettura ibrida con overflow verso un cloud pubblico esterno. I dati trattati sono sanitari e soggetti a GDPR: il bursting fuori dalla VPC dedicata amplierebbe la superficie di trasferimento e ridurrebbe il controllo sul perimetro. Inoltre, l’instradamento del carico clinico verso un ambiente esterno introdurrebbe latenza di rete aggiuntiva incompatibile con il vincolo end-to-end ≤ 1 secondo. L’elasticità richiesta è quindi realizzata all’interno della VPC mediante Resource Pooling e scaling orizzontale/verticale selettivo.
-
