@@ -50,10 +50,11 @@ To adhere to the time budget without compromising the project comprehensiveness 
 
 ## 4. 5-Week Roadmap and Risk Management
 
-1. **Week 1 (Parallel Skeleton):** Definition of the JSON feature contract and `predict()` stub (ML); login, roles, forms, and database persistence (App); Docker Desktop setup, initial Dockerfile, and testing of a basic deployment on K8s (Platform). 2. **Week 2 (Real-world Model and Basic Security):** Training on a real-world dataset and replacing the stub with the actual `.joblib` (ML) model; data segregation between physicians and audit logs (App); full containerization of the stack with NGINX as a front-end (Platform).
-2. **Week 3 (Hardening and Clustering):** Docker Scout scanning and patch application (D+E); deployment to a local multi-node Kubernetes (K8s) cluster (F+H).
-3. **Week 4 (Stress Testing and Integration):** Running load tests using `wrk` and collecting metrics/screenshots (G); finalizing end-to-end integration and addressing high-priority bug fixes.
-4. **Week 5 (Consolidation and Demo):** Drafting a technical report analyzing the limitations—comparing local laptop-based testing against cloud SLAs (5,000 req/min)—reviewing AI logs, and conducting timed dry runs of the demo (8–10 minutes), including a pod-failure simulation and a *before/after* verification using Docker Scout.
+1. **Week 1 (Parallel Skeleton):** Definition of the JSON feature contract and `predict()` stub (ML); login, roles, forms, and database persistence (App); Docker Desktop setup, initial Dockerfile, and testing of a basic deployment on K8s (Platform).
+2. **Week 2 (Real-world Model and Basic Security):** Training on a real-world dataset and replacing the stub with the actual `.joblib` (ML) model; data segregation between physicians and audit logs (App); full containerization of the stack with NGINX as a front-end (Platform).
+3. **Week 3 (Hardening and Clustering):** Docker Scout scanning and patch application (D+E); deployment to a local multi-node Kubernetes (K8s) cluster (F+H).
+4. **Week 4 (Stress Testing and Integration):** Running load tests using `wrk` and collecting metrics/screenshots (G); finalizing end-to-end integration and addressing high-priority bug fixes.
+5. **Week 5 (Consolidation and Demo):** Drafting a technical report analyzing the limitations—comparing local laptop-based testing against cloud SLAs (5,000 req/min)—reviewing AI logs, and conducting timed dry runs of the demo (8–10 minutes), including a pod-failure simulation and a *before/after* verification using Docker Scout.
 
 **4-Week Variant:** Weeks 3 and 4 are merged (combining hardening, clustering, `wrk` testing, and integration into a single week), and the buffer time for the demo is reduced. This approach is only feasible if the dataset is already available and further non-essential tasks are cut (e.g., a scaled-down demo or fewer iterations of CVE patching).
 
