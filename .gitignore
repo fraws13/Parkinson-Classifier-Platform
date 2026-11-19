@@ -1,0 +1,25 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Ambiente / segreti
+.env
+.env.*
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Output ML riproducibili (opzionale: rimuovere queste righe se vuoi versionarli)
+data/*.csv
+models/*.joblib
+
+# Dataset grezzo (tenere solo in locale)
+PaHaW/

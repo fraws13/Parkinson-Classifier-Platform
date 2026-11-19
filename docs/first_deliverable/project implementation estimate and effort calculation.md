@@ -29,7 +29,8 @@ To prevent bottlenecks during the deployment phase, the effort is balanced acros
 | **Project Total**           | **100%** | —                                                                                                                                                                                                                                                                                    | **210–240 h**   |
 
 
----## 3. Scope Strategy: Implementation vs. Architecture
+---
+## 3. Scope Strategy: Implementation vs. Architecture
 
 To adhere to the time budget without compromising the project comprehensiveness required by the course, the system is divided into components that are actually implemented locally and components that are modeled solely at an architectural level:
 
