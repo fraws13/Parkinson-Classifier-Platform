@@ -1,4 +1,5 @@
-# Report di creazione del modello ML  
+# Report di creazione del modello ML
+
 ## Track 2 — Classificazione Parkinson (PaHaW)
 
 **Progetto:** Cloud ML SaaS – Parkinson’s Disease Classification  
@@ -22,17 +23,23 @@ Il risultato è un modello **generale** (un unico classificatore per tutti i sog
 
 ---
 
+
+
 ## 2. Materiali e strumenti
+
+
 
 ### 2.1 Dataset di partenza: PaHaW
 
-Abbiamo utilizzato il corpus **PaHaW** (*Parkinson’s Disease Handwriting Database*), già presente nel repository:
+Abbiamo utilizzato il corpus **PaHaW** (*Parkinson’s Disease Handwriting Database*):
 
-| Percorso | Contenuto |
-|---|---|
-| `PaHaW/PaHaW/PaHaW_public/<ID>/` | Registrazioni grezze `.svc` per soggetto |
-| `PaHaW/PaHaW/PaHaW_files/corpus_PaHaW.xlsx` | Metadati clinici (tra cui la label `Disease`) |
-| `PaHaW/PaHaW/PaHaW_files/info.txt` | Descrizione del formato `.svc` e del protocollo |
+
+| Percorso                                    | Contenuto                                       |
+| ------------------------------------------- | ----------------------------------------------- |
+| `PaHaW/PaHaW/PaHaW_public/<ID>/`            | Registrazioni grezze `.svc` per soggetto        |
+| `PaHaW/PaHaW/PaHaW_files/corpus_PaHaW.xlsx` | Metadati clinici (tra cui la label `Disease`)   |
+| `PaHaW/PaHaW/PaHaW_files/info.txt`          | Descrizione del formato `.svc` e del protocollo |
+
 
 Secondo `info.txt`, il corpus contiene circa **37 pazienti PD** e **38 controlli sani** (totale ~75 soggetti). Gli ID delle cartelle **non sono consecutivi** (possono arrivare fino a `00098`): quindi “vedere 00098” non significa avere 98 pazienti, ma solo che l’identificativo anagrafico arriva a quel numero.
 
@@ -49,10 +56,10 @@ Importante: la colonna `y` nel `.svc` è la **coordinata verticale della penna**
 
 ### 2.3 Label di classificazione (`y` del modello)
 
-La classe clinica sta nel file Excel `corpus_PaHaW.xlsx`, colonna **`Disease`**:
+La classe clinica sta nel file Excel `corpus_PaHaW.xlsx`, colonna `Disease`:
 
-- **`PD`** = Parkinson’s Disease → etichetta modello **1**
-- **`H`** = Healthy (controllo sano) → etichetta modello **0**
+- `PD` = Parkinson’s Disease → etichetta modello **1**
+- `H` = Healthy (controllo sano) → etichetta modello **0**
 
 Altre colonne (es. `PD status`) descrivono metadati clinici (es. stato ON/OFF della terapia) e **non** sono usate come target.
 
@@ -60,26 +67,32 @@ Altre colonne (es. `PD status`) descrivono metadati clinici (es. stato ON/OFF de
 
 Nel corpus ogni soggetto ha tipicamente 8 esercizi (`__1_` … `__8_`). Su consiglio del professore ne abbiamo usati solo **tre**:
 
-| Numero file | Task | Ruolo nel progetto |
-|---:|---|---|
-| **1** | Spirale di Archimede | Task geometrico / motorio puro |
-| **2** | Lettera **“l”** corsiva ripetuta | Task ripetuto (classico neurologico) |
-| **3** | Bigramma **“le”** | Task linguistico breve (no frase lunga) |
+
+| Numero file | Task                             | Ruolo nel progetto                      |
+| ----------- | -------------------------------- | --------------------------------------- |
+| **1**       | Spirale di Archimede             | Task geometrico / motorio puro          |
+| **2**       | Lettera **“l”** corsiva ripetuta | Task ripetuto (classico neurologico)    |
+| **3**       | Bigramma **“le”**                | Task linguistico breve (no frase lunga) |
+
 
 I task 4–8 (trigramma, parole lunghe, frase completa) sono stati **esclusi** deliberatamente.
 
 ### 2.5 Script software prodotti
 
-| File | Funzione |
-|---|---|
-| `py/load_svc.py` | Legge un `.svc` e lo trasforma in tabella pandas |
-| `py/build_dataset.py` | Costruisce il dataset soggetto×feature + label |
-| `py/train.py` | Split, preprocessing, feature selection, CV, test, export |
-| `py/notebooks/01_explore_pahaw.ipynb` | Esplorazione iniziale e controlli di qualità |
+
+| File                                  | Funzione                                                  |
+| ------------------------------------- | --------------------------------------------------------- |
+| `py/load_svc.py`                      | Legge un `.svc` e lo trasforma in tabella pandas          |
+| `py/build_dataset.py`                 | Costruisce il dataset soggetto×feature + label            |
+| `py/train.py`                         | Split, preprocessing, feature selection, CV, test, export |
+| `py/notebooks/01_explore_pahaw.ipynb` | Esplorazione iniziale e controlli di qualità              |
+
 
 Dipendenze principali: `pandas`, `numpy`, `openpyxl`, `scikit-learn`, `joblib`.
 
 ---
+
+
 
 ## 3. Fase A — Esplorazione del corpus
 
@@ -113,6 +126,8 @@ Dal Excel abbiamo controllato la distribuzione `PD` / `H` e il significato di ev
 
 ---
 
+
+
 ## 4. Fase B — Costruzione del dataset (`build_dataset.py`)
 
 Questa è la fase che trasforma i segnali grezzi in una **tabella pronta per il classificatore**.
@@ -133,19 +148,23 @@ Soggetto 00001
   una sola riga nella tabella + colonna y (0/1)
 ```
 
+
+
 ### 4.2 Passi eseguiti dallo script
 
 1. **Caricare il corpus Excel** e normalizzare:
-   - `subject_id` (intero);
-   - `disease` (PD/H);
-   - `y` (1/0).
+  - `subject_id` (intero);
+  - `disease` (PD/H);
+  - `y` (1/0).
 2. **Per ogni soggetto** nel Excel:
-   - cercare i file `.svc` dei task 1, 2 e 3;
-   - se manca anche un solo task tra i tre → **skip** del soggetto (con messaggio a log);
-   - altrimenti caricare i tre segnali con `load_svc`.
+  - cercare i file `.svc` dei task 1, 2 e 3;
+  - se manca anche un solo task tra i tre → **skip** del soggetto (con messaggio a log);
+  - altrimenti caricare i tre segnali con `load_svc`.
 3. **Estrarre le feature** da ciascun task (vedi sezione 4.3).
 4. **Unire** feature + label in una sola tabella.
 5. **Salvare** il risultato in `data/dataset.csv`.
+
+
 
 ### 4.3 Feature estratte per ogni task
 
@@ -153,29 +172,35 @@ Per ciascun task `t ∈ {1,2,3}` abbiamo calcolato un blocco di feature con pref
 
 #### Feature di base (prima versione)
 
-| Feature | Significato intuitivo |
-|---|---|
-| `n_samples` | Quanti punti ha la registrazione |
-| `duration_ms` | Quanto dura il task |
-| `path_length` | Quanto “cammina” la penna (lunghezza traiettoria) |
-| `mean_speed` / `std_speed` | Velocità media e quanto oscilla |
-| `on_surface_pct` | Percentuale di punti con penna sul foglio |
-| `n_strokes` | Quanti tratti continui on-surface |
-| `pressure_mean/std/max/min` | Statistiche della pressione |
+
+| Feature                     | Significato intuitivo                             |
+| --------------------------- | ------------------------------------------------- |
+| `n_samples`                 | Quanti punti ha la registrazione                  |
+| `duration_ms`               | Quanto dura il task                               |
+| `path_length`               | Quanto “cammina” la penna (lunghezza traiettoria) |
+| `mean_speed` / `std_speed`  | Velocità media e quanto oscilla                   |
+| `on_surface_pct`            | Percentuale di punti con penna sul foglio         |
+| `n_strokes`                 | Quanti tratti continui on-surface                 |
+| `pressure_mean/std/max/min` | Statistiche della pressione                       |
+
+
+
 
 #### Feature arricchite (seconda versione)
 
 Dopo un primo training con performance moderate, abbiamo arricchito lo stesso estrattore **senza cambiare algoritmo**, aggiungendo:
 
-| Feature | Significato intuitivo |
-|---|---|
-| `in_air_pct` | Percentuale di punti in aria |
-| `on_surface_time_ms` / `in_air_time_ms` | Tempo stimato sul foglio / in aria |
-| `mean_stroke_length` / `std_stroke_length` | Lunghezza media/variabilità dei tratti |
-| `mean_acceleration` | Quanto cambia la velocità |
-| `mean_jerk` / `std_jerk` | “Scatti” del movimento (derivata dell’accelerazione) |
-| `tremor_like` | Proxy semplice di irregolarità (variabilità delle variazioni di velocità) |
-| `pressure_range` | Differenza max−min della pressione |
+
+| Feature                                    | Significato intuitivo                                                     |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
+| `in_air_pct`                               | Percentuale di punti in aria                                              |
+| `on_surface_time_ms` / `in_air_time_ms`    | Tempo stimato sul foglio / in aria                                        |
+| `mean_stroke_length` / `std_stroke_length` | Lunghezza media/variabilità dei tratti                                    |
+| `mean_acceleration`                        | Quanto cambia la velocità                                                 |
+| `mean_jerk` / `std_jerk`                   | “Scatti” del movimento (derivata dell’accelerazione)                      |
+| `tremor_like`                              | Proxy semplice di irregolarità (variabilità delle variazioni di velocità) |
+| `pressure_range`                           | Differenza max−min della pressione                                        |
+
 
 **Scelta esplicita:** nessuna generazione di campioni sintetici (no data augmentation), perché variazioni casuali delle traiettorie rischierebbero di produrre movimenti neuromotori non plausibili.
 
@@ -192,7 +217,11 @@ Il dataset è bilanciato: metà sani e metà Parkinson. Questo semplifica l’in
 
 ---
 
+
+
 ## 5. Fase C — Addestramento e valutazione (`train.py`)
+
+
 
 ### 5.1 Principio anti data leakage (molto importante)
 
@@ -206,6 +235,8 @@ Quindi:
 2. tutto ciò che “impara” (scaler, filtro MI, classificazione, CV) avviene sul **Train**;
 3. il Test si guarda **una sola volta** alla fine, solo per riportare la qualità stimata su soggetti nuovi.
 
+
+
 ### 5.2 Passo 1 — Caricamento
 
 Lo script legge `data/dataset.csv` e separa:
@@ -213,6 +244,8 @@ Lo script legge `data/dataset.csv` e separa:
 - `X` = colonne numeriche di feature;
 - `y` = label 0/1;
 - `subject_id` = identificativo (tenuto per tracciabilità degli split).
+
+
 
 ### 5.3 Passo 2 — Split Train/Test
 
@@ -243,14 +276,18 @@ SelectKBest(Mutual Information, k=20)
 Classificatore (LinearSVC  oppure  RandomForest)
 ```
 
+
+
 #### Perché questi passi
 
 1. **Imputer:** gestisce eventuali NaN (es. task senza tratti, divisioni per Δt nulli).
 2. **Scaler:** porta le feature su scale confrontabili (velocità, pressione, millisecondi convivono male senza normalizzazione).
 3. **SelectKBest + Mutual Information:** è una Feature Selection **filter**, indipendente dal classificatore (come richiesto: evitare Lasso/Ridge come metodo di selezione). Tiene le 20 feature più informative rispetto a `y`.
 4. **Classificatore:**
-   - **Linear SVM:** modello lineare, interpretabile come baseline; utile anche per simulare un modello “più debole” nel continuous training;
-   - **Random Forest:** modello non lineare, con profondità limitata (`max_depth=4`) per ridurre overfitting su pochi soggetti.
+  - **Linear SVM:** modello lineare, interpretabile come baseline; utile anche per simulare un modello “più debole” nel continuous training;
+  - **Random Forest:** modello non lineare, con profondità limitata (`max_depth=4`) per ridurre overfitting su pochi soggetti.
+
+
 
 ### 5.5 Passo 4 — Cross-Validation sul solo Train
 
@@ -270,6 +307,8 @@ Dopo la CV:
 2. si valuta sul Test (accuracy, F1 macro, confusion matrix, classification report);
 3. si salvano i bundle `.joblib`.
 
+
+
 ### 5.7 Criterio di selezione del modello “demo”
 
 Il modello esportato come principale (`models/pipeline.joblib`) è quello con:
@@ -281,25 +320,33 @@ La Linear SVM viene comunque salvata anche come `models/pipeline_linear_svm.jobl
 
 ---
 
+
+
 ## 6. Risultati ottenuti
+
+
 
 ### 6.1 Prima del forte arricchimento feature (riferimento)
 
 In una prima esecuzione (feature più semplici, k=15):
 
 - Linear SVM: CV ≈ **0.61**, Test ≈ **0.67**
-- Random Forest: CV ≈ **0.49** (instabile), Test più alto ma poco affidabile su 15 sample
+- Random Forest: CV ≈ **0.49** (instabile), Test più alto (7.3) ma poco affidabile su 15 sample
+
+
 
 ### 6.2 Dopo arricchimento feature (configurazione corrente)
 
-| Modello | CV mean ± std (Train) | Test accuracy | Test F1 macro |
-|---|---:|---:|---:|
-| **Linear SVM** | **0.615 ± 0.116** | 0.600 | 0.583 |
-| Random Forest | 0.579 ± 0.066 | 0.533 | 0.533 |
+
+| Modello        | CV mean ± std (Train) | Test accuracy | Test F1 macro |
+| -------------- | --------------------- | ------------- | ------------- |
+| **Linear SVM** | **0.615 ± 0.116**     | 0.600         | 0.583         |
+| Random Forest  | 0.579 ± 0.066         | 0.533         | 0.533         |
+
 
 **Scelta demo:** Linear SVM (migliore in CV).
 
-### 6.3 Come leggere questi numeri (spiegazione semplice)
+### 6.3 Come leggere questi numeri
 
 Immaginate 72 compiti già svolti da pazienti/controlli.
 
@@ -328,14 +375,18 @@ Per il corso, questo esito è comunque utile: dimostra una pipeline corretta, co
 
 ---
 
+
+
 ## 7. Artefatti prodotti (cosa resta nel repository)
 
-| Artefatto | Descrizione |
-|---|---|
-| `data/dataset.csv` | Tabella soggetto×feature + label |
-| `data/X_train.csv`, `X_test.csv`, `y_*.csv`, `subject_id_*.csv` | Split riproducibile |
-| `models/pipeline.joblib` | Modello demo (best CV, attualmente Linear SVM) |
-| `models/pipeline_linear_svm.joblib` | Baseline lineare per simulazione retraining |
+
+| Artefatto                                                       | Descrizione                                    |
+| --------------------------------------------------------------- | ---------------------------------------------- |
+| `data/dataset.csv`                                              | Tabella soggetto×feature + label               |
+| `data/X_train.csv`, `X_test.csv`, `y_*.csv`, `subject_id_*.csv` | Split riproducibile                            |
+| `models/pipeline.joblib`                                        | Modello demo (best CV, attualmente Linear SVM) |
+| `models/pipeline_linear_svm.joblib`                             | Baseline lineare per simulazione retraining    |
+
 
 Il bundle joblib contiene tipicamente:
 
@@ -346,6 +397,8 @@ Il bundle joblib contiene tipicamente:
 - i task usati `[1,2,3]`.
 
 ---
+
+
 
 ## 8. Come riprodurre i passi (comandi)
 
@@ -360,7 +413,11 @@ Ordine obbligatorio: prima si costruisce/aggiorna `dataset.csv`, poi si addestra
 
 ---
 
+
+
 ## 9. Decisioni di progetto e stato attuale
+
+
 
 ### Cosa abbiamo deliberatamente fatto
 
@@ -372,17 +429,23 @@ Ordine obbligatorio: prima si costruisce/aggiorna `dataset.csv`, poi si addestra
 - confronto SVM vs RF;
 - export di due bundle (demo + baseline retraining).
 
+
+
 ### Cosa abbiamo deliberatamente non fatto (per ora)
 
 - non abbiamo inseguito ulteriori round di tuning solo per alzare l’accuracy di pochi punti;
 - non abbiamo usato Lasso/Ridge come feature selection;
 - non abbiamo ancora collegato il modello all’API SaaS (passo successivo).
 
+
+
 ### Stato
 
 Il modello offline può considerarsi **sigillato come baseline didattica**: abbastanza maturo per passare all’integrazione applicativa (`/predict`, auth, container, Kubernetes), mantenendo traccia chiara di limiti e metriche in relazione/demo.
 
 ---
+
+
 
 ## 10. Sintesi finale
 
