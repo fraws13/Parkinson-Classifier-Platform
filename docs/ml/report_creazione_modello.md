@@ -65,7 +65,18 @@ Altre colonne (es. `PD status`) descrivono metadati clinici (es. stato ON/OFF de
 
 ### 2.4 I tre task scelti (come da indicazioni del professore)
 
-Nel corpus ogni soggetto ha tipicamente 8 esercizi (`__1_` … `__8_`). Su consiglio del professore ne abbiamo usati solo **tre**:
+Nel corpus ogni soggetto ha tipicamente 8 esercizi (`__1_` … `__8_`). 
+I tre task coprono tre tipi di carico motorio diversi:
+
+Spirale → controllo continuo, fluidità, tremor-like su traiettoria lunga
+“l” ripetuta → ritmo, bradicinesia, micrografia su gesto ciclico (test classico in neurologia della scrittura)
+“le” → breve pianificazione motoria + passaggio tra grafemi, senza arrivare a frasi lunghe.
+
+Avete ~70 soggetti. Con ~20 feature/task:
+
+3 task ≈ 60 feature
+8 task ≈ 160+ feature
+Con n << p il modello overfitta facilmente. Limitare i task è coerente con filter FS e con un modello generale stabile, non con “più colonne = meglio”.
 
 
 | Numero file | Task                             | Ruolo nel progetto                      |
@@ -251,7 +262,7 @@ Lo script legge `data/dataset.csv` e separa:
 
 Parametri usati:
 
-- `test_size = 20%`
+- `test_size = 20%`, aumentarlo porterebbe a un train troppo piccolo, diminuirlo   porterebbe la metrica hold-out ad essere troppo rumorosa, un solo errore cambierebbe l'accuracy. 
 - `stratify = y` (per mantenere bilanciamento PD/H in entrambi gli split)
 - `random_state = 42` (riproducibilità)
 
@@ -286,6 +297,7 @@ Classificatore (LinearSVC  oppure  RandomForest)
 4. **Classificatore:**
   - **Linear SVM:** modello lineare, interpretabile come baseline; utile anche per simulare un modello “più debole” nel continuous training;
   - **Random Forest:** modello non lineare, con profondità limitata (`max_depth=4`) per ridurre overfitting su pochi soggetti.
+Abbiamo confrontato solo Linear SVM e Random Forest perché rappresentano due famiglie opposte (decision boundary lineare vs ensemble non lineare), sono adatte a un dataset tabellare piccolo, e bastano a scegliere un modello demo affidabile senza allargare lo scope a tuning di architetture più complesse, non necessarie per l’integrazione SaaS.
 
 
 

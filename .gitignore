@@ -23,3 +23,5 @@ models/*.joblib
 
 # Dataset grezzo (tenere solo in locale)
 PaHaW/
+#tutte le cartelle di pycache
+__pycache__/
