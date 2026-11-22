@@ -20,7 +20,7 @@ Cursor, ChatGPT, Copilot, and any other generative AI used for project work.
 
 Organize by deliverable folder. Session files:
 
-`first_deliverable_<short-topic>.md`
+`X_deliverable_<short-topic>.md`
 
 Example: `first_deliverable/first_deliverable_ml-pipeline.md`
 
