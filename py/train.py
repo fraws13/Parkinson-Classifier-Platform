@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from functools import partial
 
 import joblib
 import numpy as np
@@ -70,7 +71,7 @@ def make_pipeline(clf_name: str, k_best: int = K_BEST) -> Pipeline:
             ("scaler", StandardScaler()),
             (
                 "feature_selection",
-                SelectKBest(score_func=mutual_info_classif, k=k_best),
+                SelectKBest(score_func=partial(mutual_info_classif, random_state=RANDOM_STATE), k=k_best),
             ),
             ("clf", make_classifier(clf_name)),
         ]

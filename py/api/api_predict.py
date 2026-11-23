@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import math
 from pathlib import Path
 from typing import Any
 
 import joblib
+import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -25,6 +28,12 @@ ID_TO_LABEL = {v: k for k, v in LABEL_MAP.items()}
 BUNDLE: dict[str, Any] | None = None
 if MODEL_PATH.exists():
     BUNDLE = joblib.load(MODEL_PATH)
+MODEL_VERSION = (
+    f"{BUNDLE.get('model_name', 'model')}_{hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest()[:16]}"
+    if BUNDLE is not None else None
+)
+if BUNDLE is not None and BUNDLE.get('feature_names') != FEATURE_NAMES:
+    raise RuntimeError('Model features differ from the versioned feature contract')
 
 app = FastAPI(title="Parkinson Predict API", version="1.0")
 
@@ -48,7 +57,15 @@ def _vectorize(features: dict[str, float | None]) -> pd.DataFrame:
             status_code=400,
             detail=f"Feature sconosciute: {sorted(unknown)}",
         )
-    row = {name: features.get(name) for name in FEATURE_NAMES}
+    if set(features) != set(FEATURE_NAMES):
+        raise HTTPException(status_code=400, detail='Tutte le 63 chiavi feature sono richieste (numero o null).')
+    if not any(value is not None for value in features.values()):
+        raise HTTPException(status_code=400, detail='Almeno una feature numerica è richiesta.')
+    if any(value is not None and not math.isfinite(value) for value in features.values()):
+        raise HTTPException(status_code=400, detail='Le feature devono essere finite.')
+    if any(name.endswith('_pct') and value is not None and not 0 <= value <= 1 for name, value in features.items()):
+        raise HTTPException(status_code=400, detail='Le frazioni _pct devono essere comprese tra 0 e 1.')
+    row = {name: np.nan if features[name] is None else features[name] for name in FEATURE_NAMES}
     return pd.DataFrame([row], columns=FEATURE_NAMES)
 
 
@@ -68,11 +85,9 @@ def predict(body: PredictRequest) -> PredictResponse:
     if BUNDLE is not None:
         pipeline = BUNDLE["pipeline"]
         pred = int(pipeline.predict(X)[0])
-        model_version = f"{BUNDLE.get('model_name', 'model')}_v1"
+        model_version = MODEL_VERSION
     else:
-        # Stub finché non c'è models/pipeline.joblib
-        pred = 0
-        model_version = "stub_v0"
+        raise HTTPException(status_code=503, detail='Modello non disponibile: nessuna predizione simulata.')
 
     return PredictResponse(
         subject_id=body.subject_id,
