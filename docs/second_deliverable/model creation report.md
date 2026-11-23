@@ -79,7 +79,6 @@ You have ~70 subjects. With ~20 features/task:
 8 tasks ≈ 160+ features
 With n << p the model overfits easily. Limiting the tasks is consistent with filter FS and with a stable general model, not with "more columns = better".
 
-
 | File Number | Task                            | Role in the Project                      |
 | ----------- | ------------------------------- | ---------------------------------------- |
 | **1**       | Archimedean Spiral              | Pure geometric / motor task              |
@@ -304,6 +303,7 @@ Classifier (LinearSVC  or  RandomForest)
 3. **SelectKBest + Mutual Information:** is a **filter** Feature Selection, independent of the classifier (as required: avoid Lasso/Ridge as a selection method). Keeps the 20 most informative features with respect to `y`.
 
 We use a filter Feature Selection based on Mutual Information to reduce dimensionality on a small sample, selecting the most informative features with respect to the label independently of the classifier, so the SVM vs RF comparison remains fair.
+
 4. **Classifier:**
 
 - **Linear SVM:** linear model, interpretable as a baseline; also useful to simulate a "weaker" model in continuous training;
