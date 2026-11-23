@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// CHECK constraints for role/adminSlot are versioned in the SQL migration.
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  username     String?   @unique
+  name         String
+  passwordHash String
+  role         String
+  adminSlot    Int?      @unique
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  patients     Patient[]
+  sessions     Session[]
+  auditEvents  AuditLog[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model Patient {
+  id              String       @id @default(cuid())
+  code            String       @unique
+  sourceSubjectId Int?         @unique
+  name            String?
+  datasetSplit    String?
+  doctorId        String
+  doctor          User         @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  createdAt       DateTime     @default(now())
+  assessments     Assessment[]
+  transfers       PatientTransfer[]
+
+  @@index([doctorId])
+}
+
+model Assessment {
+  id              String    @id @default(cuid())
+  patientId       String
+  patient         Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  features        Json
+  schemaVersion   String
+  source          String
+  referenceLabel  String?
+  prediction      Int?
+  predictedLabel  String?
+  modelVersion    String?
+  predictedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([patientId, createdAt])
+}
+
+model PatientTransfer {
+  id           String   @id @default(cuid())
+  patientId    String
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  fromDoctorId String
+  toDoctorId   String
+  actorId      String
+  createdAt    DateTime @default(now())
+
+  @@index([patientId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actor     User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action    String
+  targetId  String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
