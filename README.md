@@ -1,4 +1,10 @@
-# Cloud ML SaaS – Parkinson’s Disease Classification (Track 2)
+# Cloud ML SaaS – Parkinson’s Disease Classification (GROUP 2)
+
+Antonio	Esposito	IE22700003	a.esposito322@studenti.unisa.it
+
+Fabrizio 	D'Errico	IE22700121	f.derrico2@studenti.unisa.it
+
+Francesco Vittorio	Allocca	IE22700073	f.allocca5@studenti.unisa.it
 
 ## 1. Selected Track and Project Objective
 
