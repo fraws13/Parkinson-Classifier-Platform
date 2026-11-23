@@ -25,3 +25,4 @@ models/*.joblib
 PaHaW/
 #tutte le cartelle di pycache
 __pycache__/
+node_modules
