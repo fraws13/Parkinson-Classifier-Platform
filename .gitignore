@@ -25,3 +25,16 @@ models/*.joblib
 PaHaW/
 #tutte le cartelle di pycache
 __pycache__/
+
+# Web application
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.venv/
+!**/.env.example
