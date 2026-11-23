@@ -1,5 +1,9 @@
 # Group 2 SSC — AI activity index
 
+- 2026-11-23 — OpenCode: [Web app iniziale e separazione moduli](implementation/web-app-structure.md) (revisione umana in attesa).
+- 2026-11-23 — OpenCode: [Dashboard medico, inserimento manuale e Predict](implementation/doctor-predict.md) (revisione umana in attesa).
+- 2026-11-23 — OpenCode: [Tema grafico della presentazione](implementation/presentation-theme.md) (revisione umana in attesa).
+
 
 | Date       | Author | Tool   | Topic                                                                   | Log file                                                                                               |
 | ---------- | ------ | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
