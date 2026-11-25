@@ -170,8 +170,8 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     actor Admin as A2 Administrator
-    actor MedicoA as A1 Outgoing Doctor
-    actor MedicoB as A1 Incoming Doctor
+    actor DoctorA as A1 Outgoing Doctor
+    actor DoctorB as A1 Incoming Doctor
     participant UI as Frontend UI
     participant API as Backend API
     participant DB as Clinical DB
@@ -185,31 +185,30 @@ sequenceDiagram
     DB-->>API: ADMIN user
     API-->>UI: Admin session (RF-01, RF-02)
 
-    Admin->>UI: Requests transfer of patient P from MedicoA to MedicoB
+    Admin->>UI: Requests transfer of patient P from DoctorA to DoctorB
     UI->>API: Reassignment request (expectedDoctorId, toDoctorId)
     API->>API: Authorizes ADMIN role only (RF-02)
 
-    API->>DB: Transaction UPDATE ownership P → MedicoB
+    API->>DB: Transaction UPDATE ownership P → DoctorB
     DB-->>API: Commit succeeded (RF-04)
     API->>DB: Writes reassignment audit (RF-05)
     API-->>UI: Transfer confirmed
     UI-->>Admin: Assignment updated (metadata only)
 
-    Note over MedicoA,DB: Upon commit MedicoA loses all privileges on P
+    Note over DoctorA,DB: Upon commit DoctorA loses all privileges on P
 
-    MedicoA->>UI: Attempts opening or predicting on patient P
+    DoctorA->>UI: Attempts opening or predicting on patient P
     UI->>API: GET/POST on resources of P
     API->>DB: Verifies current ownership
-    DB-->>API: Current owner = MedicoB
+    DB-->>API: Current owner = DoctorB
     API->>DB: Writes access denied audit (RF-05)
     API-->>UI: 403 Forbidden
-    UI-->>MedicoA: Access denied (RF-03)
+    UI-->>DoctorA: Access denied (RF-03)
 
-    MedicoB->>UI: Opens assigned patient P
+    DoctorB->>UI: Opens assigned patient P
     UI->>API: GET patient P
     API->>DB: Verifies current ownership
-    DB-->>API: Current owner = MedicoB
+    DB-->>API: Current owner = DoctorB
     API-->>UI: Allowed clinical data
-    UI-->>MedicoB: Patient view and history
-
+    UI-->>DoctorB: Patient view and history
 ```
