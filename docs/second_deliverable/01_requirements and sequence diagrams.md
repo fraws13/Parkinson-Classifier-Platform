@@ -163,9 +163,12 @@ sequenceDiagram
 **Objective:** demonstrate multi-tenant isolation and immediate revocation after reassignment, without exposing clinical data to the admin.
 
 **Covered requirements:** RF-01, RF-02, RF-03, RF-04, RF-05; RNF-15.
+
 **Note**
 
 actor DoctorA as A1 Outgoing Doctor
+
+
 actor DoctorB as A1 Incoming Doctor
 
 **Acceptance criteria (6):** 1 (also after transfer).
