@@ -85,7 +85,61 @@ The **ML engine is internal** to the system and does not appear as an actor; sim
 
 
 
-## 6. Minimum MVP Acceptance Criteria
+## 6. User Stories and Acceptance Criteria (Gherkin)
+
+User stories align technical development with clinical/governance value. Format: *As a \<role\>, I want \<capability\>, so that \<benefit\>*. Acceptance criteria use Given–When–Then.
+
+### US-01 — Clinically authorized prediction
+
+**Story:** As a Local Doctor, I want to submit PaHaW task 1–2–3 features for a patient I own and receive an H/PD outcome, so that I can support screening without accessing other doctors’ patients.
+
+**Acceptance criteria:**
+
+- **A (valid owned request):** Given I am authenticated as Doctor and owner of patient P, When I submit 63 schema-valid features, Then I receive `prediction`, `label`, and `model_version`, and the report is persisted on P (design target ≤ 1 s end-to-end).
+- **B (ownership denied):** Given I am not the owner of P, When I call predict on P, Then the API returns 403, writes a rejection audit, and performs no inference.
+- **C (model unavailable):** Given the serialized model is not loaded, When I request a prediction, Then the system returns an explicit error (e.g. 503) and never invents a class.
+
+### US-02 — Ownership isolation and patient migration
+
+**Story:** As a System Administrator, I want to reassign a patient from Doctor A to Doctor B, so that clinical access always follows the current ownership.
+
+**Acceptance criteria:**
+
+- **A (revocation):** Given the transfer of patient P from A to B has committed, When A attempts read or predict on P, Then the API returns 403.
+- **B (new owner):** Given the same transfer has committed, When B opens P, Then access is allowed.
+- **C (admin cleartext ban):** The Administrator UI/API never exposes clinical features or prediction outcomes in cleartext (RNF-15).
+
+### US-03 — Clinical feedback and governance metric
+
+**Story:** As a Local Doctor, I want to confirm or correct a prediction on my patient, so that the clinically validated error rate can feed conditional retraining.
+
+**Acceptance criteria:**
+
+- **A (scope):** Only the current owner may submit feedback; each event is linked to the specific report and its `model_version`.
+- **B (metric):** Only confirm/correct feedbacks enter the error-rate denominator; predictions without feedback are excluded.
+
+### US-04 — Conditional retraining governance (Arch.)
+
+**Story:** As a System Administrator, I want to configure the minimum sample size N and the error threshold and monitor jobs, so that a new model can be published with zero downtime without my launching training by hand.
+
+**Acceptance criteria:**
+
+- **A (trigger):** Given at least **N ≥ 10** feedbacks on the active model version and `validated_error_rate ≥ 60%`, When the policy is satisfied, Then the Retraining Worker starts in the batch pool (RF-17).
+- **B (isolation / hot-swap):** Publication uses the Model Registry hot-swap; the online prediction path is not degraded (RF-18, RNF-07).
+- **C (monitoring):** The admin dashboard shows job state and active `model_version` only—no clinical payloads.
+
+### US-05 — Online elasticity (Arch.)
+
+**Story:** As a System Administrator, I want Gateway, Clinical Core, and Inference to scale via the Automated Scaling Listener, so that the service can absorb peaks up to 5,000 req/min in the Mon–Fri 08:00–18:00 window.
+
+**Acceptance criteria:**
+
+- **A (scale):** Given load above the configured guard threshold, When traffic rises, Then the system scales out; when load falls after the stabilization window, Then it scales in.
+- **B (pooling):** The Retraining Worker does **not** scale in the same pool as the online path (Resource Pooling).
+
+
+
+## 7. Minimum MVP Acceptance Criteria
 
 1. An authenticated doctor cannot obtain patient information belonging to another doctor via either UI or API, including lists, reports, and predictions.
 2. A schema-compliant input from an authorized doctor produces a `prediction`, `label`, `model_version` response **when the real model is loaded**. Absence of the model: explicit error, not a plausible placeholder prediction.
@@ -98,11 +152,13 @@ The **ML engine is internal** to the system and does not appear as an actor; sim
 
 
 
-## 7. System Behavior — Sequence Diagrams
+## 8. System Behavior — Sequence Diagrams
 
-This section shows how the MVP components interact in the two main use cases. The diagrams use the system boundary from §2 (external actors A1/A2; ML and DB as internal components).
+> This section shows how the components interact in the **three** main use cases (SD-01 prediction, SD-02 reassignment, **SD-03 retraining governance**). SD-03 is **architectural** (designed), not part of the MVP acceptance criteria in §7.
 
-### 7.1 SD-01 — End-to-End Clinical Prediction
+
+
+### 8.1 SD-01 — End-to-End Clinical Prediction
 
 **Title:** Doctor authentication, ownership, feature validation, inference, and report persistence
 
@@ -110,7 +166,7 @@ This section shows how the MVP components interact in the two main use cases. Th
 
 **Covered requirements:** RF-01, RF-02, RF-03, RF-05, RF-07, RF-08, RF-09, RF-10, RF-13, RF-16, RF-20; RNF-16, RNF-17.
 
-**Acceptance criteria (§6):** 1, 2, 3, 4.
+**Acceptance criteria (§7):** 1, 2, 3, 4.
 
 ```mermaid
 sequenceDiagram
@@ -170,7 +226,7 @@ sequenceDiagram
 
 
 
-### 7.2 SD-02 — Patient Reassignment and Immediate Ownership Revocation
+### 8.2 SD-02 — Patient Reassignment and Immediate Ownership Revocation
 
 **Title:** Administrative transfer, atomic commit, former doctor access attempt, and new owner access
 
@@ -178,7 +234,7 @@ sequenceDiagram
 
 **Covered requirements:** RF-01, RF-02, RF-03, RF-04, RF-05; RNF-15.
 
-**Acceptance criteria (6):** 1 (also after transfer).
+**Acceptance criteria (§7):** 1 (also after transfer).
 
 ```mermaid
 sequenceDiagram
@@ -225,6 +281,88 @@ sequenceDiagram
     DB-->>API: Current owner = DoctorB
     API-->>UI: Allowed clinical data
     UI-->>DoctorB: Patient view and history
+
+```
+
+
+
+
+
+### 8.3 SD-03 — Conditional Retraining and Hot-Swap (Administrator governance)
+
+**Title:** Threshold configuration, automatic trigger, offline retraining, registry publish, and admin monitoring without clinical cleartext
+
+**Objective:** show the asynchronous model lifecycle: the Administrator governs policy and observes job state; training runs in the isolated Retraining Worker when the clinically validated error rate breaches the policy (see `02_cloud architecture.md` §3.4).
+
+**Covered requirements:** RF-05, RF-11 (feedback upstream), RF-15, RF-17, RF-18, RF-19; RNF-07, RNF-13, RNF-15, RNF-17.
+
+**Scope:** Arch. Only (not required in the local MVP demo; MVP retains dual joblib artifacts for simulated baseline swap).
+
+**Policy defaults (reference):** evaluate only after **N ≥ 10** feedbacks on the *active* model version; trigger when `validated_error_rate ≥ 60%` (above expected ~50% operating error of the demo model).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as A2 Administrator
+    actor Doctor as A1 Local Doctor
+    participant UI as Frontend UI
+    participant API as Clinical Core and Auth
+    participant DB as Clinical and Identity DB
+    participant Mon as SLA / Governance Monitor
+    participant Worker as Retraining Worker
+    participant Reg as Model Registry
+    participant ML as ML Inference
+
+    Note over Admin,ML: SD-03 — asynchronous path (Arch. Only)
+    Note over Admin,UI: Admin never reads cleartext features or clinical outcomes (RNF-15)
+
+    Admin->>UI: Login as Administrator
+    UI->>API: POST /api/auth/login
+    API->>DB: Verifies ADMIN role
+    API-->>UI: Admin session
+
+    Admin->>UI: Sets retraining policy (N min, error threshold)
+    UI->>API: Configure governance thresholds
+    API->>DB: Persists policy (e.g. N≥10, error≥60%)
+    API->>DB: Audit: threshold update (RF-05)
+    API-->>UI: Policy saved
+
+    Note over Doctor,DB: Upstream clinical feedback (synchronous; feeds the metric)
+    Doctor->>UI: Confirms or corrects a prediction (own patient)
+    UI->>API: Submit clinical feedback
+    API->>DB: Ownership check then store feedback
+    API->>DB: Audit: feedback event
+
+    Mon->>DB: Reads feedbacks for active model_version
+    Mon->>Mon: If count ≥ N and error_rate ≥ threshold
+    Mon->>Worker: Emit retraining trigger (RF-17)
+    Note over Worker: Batch pool — does not share online ASL capacity (RNF-07)
+
+    Worker->>DB: Load historical + confirmed task 1–2–3 cases (no IDs to registry)
+    Note over Worker: No synthetic augmentation (RF-15)
+    Worker->>Worker: Impute → scale → MI filter FS → train → versioned bundle
+    Worker->>Reg: Publish new bundle (controlled write)
+    Reg-->>Worker: Version registered
+    Worker->>ML: Signal hot-swap / reload active version (RF-18)
+    ML->>Reg: Read-only fetch of active bundle
+    ML-->>Worker: Reload OK (service stays up)
+    Worker->>DB: Audit: trigger, N, error_rate, dataset size, version, outcome
+
+    Admin->>UI: Opens monitoring (job state, active model_version)
+    UI->>API: GET retraining / model governance status
+    API->>DB: Reads job metadata and audit (no clinical payloads)
+    API-->>UI: Status: running | succeeded | failed + model_version
+    UI-->>Admin: Dashboard without cleartext clinical data
+
+    opt Publish gate fails or Admin requests rollback
+        Admin->>UI: Request rollback to previous version
+        UI->>API: Rollback active pointer
+        API->>Reg: Reactivate previous bundle
+        API->>ML: Reload previous version
+        API->>DB: Audit: rollback
+    end
+
+
 
 ```
 

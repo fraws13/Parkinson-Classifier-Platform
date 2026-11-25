@@ -18,7 +18,6 @@ __pycache__/
 Thumbs.db
 
 # Output ML riproducibili (opzionale: rimuovere queste righe se vuoi versionarli)
-data/*.csv
 models/*.joblib
 
 # Dataset grezzo (tenere solo in locale)
