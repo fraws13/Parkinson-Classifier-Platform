@@ -26,7 +26,7 @@ DATA_PATH = REPO_ROOT / "data" / "dataset.csv"
 DATA_DIR = REPO_ROOT / "data"
 MODELS_DIR = REPO_ROOT / "models"
 
-TEST_SIZE = 0.2
+TEST_SIZE = 0.3
 RANDOM_STATE = 42
 N_FOLDS = 5
 K_BEST = 20
