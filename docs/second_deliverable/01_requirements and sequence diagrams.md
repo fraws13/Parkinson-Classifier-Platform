@@ -88,28 +88,11 @@ The **ML engine is internal** to the system and does not appear as an actor; sim
 7. `wrk` produces repeatable metrics (throughput, latency, errors, and load parameters); the report distinguishes the local result from the architectural SLA.
 8. Upon deleting an application Pod, the service becomes available again through the configured Kubernetes mechanisms (demo scenario).
 
-## 7. Assumptions, Divergences, and Decisions to Clarify
-
-| ID | Issue | Status / Recommended Handling |
-| --- | --- | --- |
-| D-01 | README mentions 175 subjects, PaHaW report uses 72 usable subjects | Confirm which official dataset/fold the professor requires; do not claim equivalence without evidence. |
-| D-02 | RBAC: README also mentions operators, MVP specifies 2 roles | 2-role MVP; third role only if mandated by the official specification. |
-| D-03 | JSON: the list has 63 features, but the current API allows missing keys (imputation) | Decide whether all are mandatory or if `null`/omissions are allowed; document the policy and tests. |
-| D-04 | Current script uses `stub_v0` with class H when the model is missing | For any non-purely technical demo, return error/unavailability and do not present the stub as a clinical prediction. |
-| D-05 | Architecture describes probabilities, but the FastAPI API does not return probabilities | For MVP stick to `prediction`, `label`, `model_version`; probabilities only if model and contract support them. |
-| D-06 | CRUD requirement and right to erasure | Define deletion/archiving policy and authorized actor; do not confuse application delete with GDPR management. |
-| D-07 | Admin without access to cleartext data | Distinguish permissions in software from DBA/root/cloud privileges, which require additional controls. |
-| D-08 | Retraining and model modification | Architectural, not promised in the MVP. Require validation before promoting an updated model. |
-| D-09 | Data removal from training | Do not assume that the lack of identifiers in the model eliminates any residual risk or automatically makes unlearning superfluous; specific analysis is needed. |
-| D-10 | SLA 99.5%, 5,000 req/min, latency ≤1 s | Architectural targets not to be declared met without a test plan and representative measurements. |
-| D-11 | Feature extraction and ordering | JSON property order has no semantic meaning; the API must re-enforce canonical order and verify consistency with `joblib`. |
-| D-12 | Test security | `wrk` benchmarks and access controls must be performed on a test environment without real health data. |
-
-## 8. System Behavior — Sequence Diagrams
+## 7. System Behavior — Sequence Diagrams
 
 This section shows how the MVP components interact in the two main use cases. The diagrams use the system boundary from §2 (external actors A1/A2; ML and DB as internal components).
 
-### 8.1 SD-01 — End-to-End Clinical Prediction
+### 7.1 SD-01 — End-to-End Clinical Prediction
 
 **Title:** Doctor authentication, ownership, feature validation, inference, and report persistence
 
@@ -173,7 +156,7 @@ sequenceDiagram
 
 ```
 
-### 8.2 SD-02 — Patient Reassignment and Immediate Ownership Revocation
+### 7.2 SD-02 — Patient Reassignment and Immediate Ownership Revocation
 
 **Title:** Administrative transfer, atomic commit, former doctor access attempt, and new owner access
 
