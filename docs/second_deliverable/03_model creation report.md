@@ -354,7 +354,7 @@ Linear SVM is still also saved as `models/pipeline_linear_svm.joblib` with the `
 In an initial run (simpler features, k=15):
 
 - Linear SVM: CV ≈ **0.61**, Test ≈ **0.67**
-- Random Forest: CV ≈ **0.49** (unstable), higher Test (7.3) but unreliable on 15 samples
+- Random Forest: CV ≈ **0.49** (unstable), higher Test (0.73) but unreliable on 15 samples
 
 
 
