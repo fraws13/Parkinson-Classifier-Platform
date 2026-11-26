@@ -327,8 +327,8 @@ sequenceDiagram
     API->>DB: Audit: threshold update (RF-05)
     API-->>UI: Policy saved
 
-    Note over Doctor,DB: Upstream clinical feedback (synchronous; feeds the metric)
-    Doctor->>UI: Confirms or corrects a prediction (own patient)
+        Note over Doctor,DB: Clinical feedback feeds the metric
+    Doctor->>UI: Confirms or corrects prediction for own patient
     UI->>API: Submit clinical feedback
     API->>DB: Ownership check then store feedback
     API->>DB: Audit: feedback event
