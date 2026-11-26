@@ -13,6 +13,11 @@
 .icon-button:hover { background: var(--blush); }
 .text-button { border: 0; background: none; color: var(--graphite); display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; padding: 8px 0; }
 .text-button:hover { text-decoration: underline; text-underline-offset: 4px; }
+.patient-actions { display: flex; justify-content: flex-end; align-items: center; gap: 14px; }
+.danger-action { color: #8d302b; }
+.danger-action:hover { background: #fbeceb; }
+.button.danger { background: #8d302b; color: white; border-color: #8d302b; }
+.button.danger:hover:not(:disabled) { background: #6f2420; }
 .badge { display: inline-flex; align-items: center; gap: 5px; background: #f4eeee; color: #625a5a; padding: 6px 9px; border: 1px solid #dbd2d2; border-radius: 2px; font-size: 9px; font-weight: 600; white-space: nowrap; letter-spacing: .2px; }
 /* Status colors remain semantic; presentation chrome is monochrome. */
 .badge.green { background: #f0f3ef; color: #455942; border-color: #d1dacd; }

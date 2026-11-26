@@ -6,6 +6,7 @@ export function createClinicalRoutes(controller, authenticated) {
   router.use(authenticated, requireDoctor);
   router.get('/patients', controller.listPatients);
   router.post('/patients', controller.createPatient);
+  router.delete('/patients/:id', controller.deletePatient);
   router.get('/patients/:id', controller.getPatient);
   router.post('/patients/:id/assessments', controller.createAssessment);
   router.post('/patients/:id/assessments/:assessmentId/predict', controller.predict);

@@ -7,7 +7,7 @@ export function createClinicalService(db, inference) {
     async listPatients(doctorId) {
       const patients = await db.patient.findMany({
         where: { doctorId, ...operationalPatients }, orderBy: { code: 'asc' },
-        select: { id: true, code: true, name: true, datasetSplit: true, createdAt: true, _count: { select: { assessments: true } }, assessments: { orderBy: { createdAt: 'desc' }, take: 1, select: { referenceLabel: true, predictedLabel: true, source: true, createdAt: true } } },
+        select: { id: true, code: true, name: true, sourceSubjectId: true, datasetSplit: true, createdAt: true, _count: { select: { assessments: true } }, assessments: { orderBy: { createdAt: 'desc' }, take: 1, select: { referenceLabel: true, predictedLabel: true, source: true, createdAt: true } } },
       });
       return patients.map(({ _count, assessments, ...patient }) => ({ ...patient, assessmentCount: _count.assessments, latestAssessment: assessments[0] || null }));
     },
@@ -24,6 +24,24 @@ export function createClinicalService(db, inference) {
         const patient = await tx.patient.create({ data: { code: `PAT-${randomUUID().slice(0, 8).toUpperCase()}`, name: body.name, doctorId } });
         await tx.auditLog.create({ data: { actorId: doctorId, action: 'PATIENT_CREATED', targetId: patient.id } });
         return patient;
+      });
+    },
+    deletePatient(patientId, doctorId) {
+      return db.$transaction(async tx => {
+        const patient = await tx.patient.findFirst({
+          where: { id: patientId, doctorId, sourceSubjectId: null, ...operationalPatients },
+          select: { id: true },
+        });
+        if (!patient) return { status: 404, error: 'Paziente manuale non disponibile.' };
+
+        const transferCount = await tx.patientTransfer.count({ where: { patientId } });
+        if (transferCount > 0) {
+          return { status: 409, error: 'Il paziente ha uno storico di riassegnazioni e non può essere eliminato.' };
+        }
+
+        await tx.patient.delete({ where: { id: patientId } });
+        await tx.auditLog.create({ data: { actorId: doctorId, action: 'PATIENT_DELETED', targetId: patientId } });
+        return { status: 204 };
       });
     },
     createAssessment(patientId, body, doctorId) {

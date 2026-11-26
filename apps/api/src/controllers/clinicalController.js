@@ -13,6 +13,11 @@ export function createClinicalController(clinicalService) {
     async createPatient(req, res) {
       res.status(201).json({ patient: await clinicalService.createPatient(newPatient.parse(req.body), req.user.id) });
     },
+    async deletePatient(req, res) {
+      const result = await clinicalService.deletePatient(req.params.id, req.user.id);
+      if (result.error) return res.status(result.status).json({ error: result.error });
+      res.status(204).end();
+    },
     async createAssessment(req, res) {
       const assessment = await clinicalService.createAssessment(req.params.id, newAssessment.parse(req.body), req.user.id);
       if (!assessment) return res.status(404).json({ error: 'Paziente non disponibile.' });
