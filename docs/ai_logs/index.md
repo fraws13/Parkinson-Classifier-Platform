@@ -3,6 +3,8 @@
 - 2026-11-23 — OpenCode: [Web app iniziale e separazione moduli](implementation/web-app-structure.md) (revisione umana in attesa).
 - 2026-11-23 — OpenCode: [Dashboard medico, inserimento manuale e Predict](implementation/doctor-predict.md) (revisione umana in attesa).
 - 2026-11-23 — OpenCode: [Tema grafico della presentazione](implementation/presentation-theme.md) (revisione umana in attesa).
+- 2026-11-26 — OpenCode: Importazione JSON dei test nella cartella del paziente (revisione umana in attesa).
+- 2026-11-26 — OpenCode: Eliminazione controllata di pazienti e medici dalle rispettive console (revisione umana in attesa).
 
 
 | Date       | Author | Tool   | Topic                                                                   | Log file                                                                                               |

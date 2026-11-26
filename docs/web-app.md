@@ -8,12 +8,33 @@ Gli stili sono separati in `styles/index.css` (token e regole base), `components
 
 ## Aggiornamento: dashboard medico e Predict
 
+### Importazione JSON dei test
+
+Dalla cartella di un paziente manuale il medico può scegliere **Importa JSON**. Il file viene letto nel browser e i valori validi compilano il modulo del nuovo test. Le sezioni restano separate per task, quindi `t1_*` appare in Spirale, `t2_*` in Lettera “l” e `t3_*` in Bigramma “le”. Prima del salvataggio il medico può correggere i dati importati.
+
+Formato consigliato:
+
+```json
+{
+  "features": {
+    "t1_duration_ms": 1111,
+    "t1_in_air_pct": 0.25,
+    "t2_mean_speed": 2.5,
+    "t3_mean_jerk": 0.75
+  }
+}
+```
+
+Il file deve contenere un singolo oggetto con `features`. Sono consentiti i nomi presenti in `contracts/feature_schema.json`, numeri finiti, `null` e valori `_pct` tra 0 e 1. Campi sconosciuti o non validi vengono elencati nella pagina, mentre gli altri valori validi restano compilati. Il limite del file è 64 KB. L'importazione non salva automaticamente il test.
+
 Le indicazioni qui sostituiscono le note precedenti sull'assenza di inferenza.
 
 - Login con username (oppure email degli account esistenti).
 - Configurazione demo esplicita: dopo seed e migrazioni, `npm run demo:configure` imposta `admin/admin` e `medic/admin`, `medic2/admin`, `medic3/admin` (eventuali medici aggiuntivi numerati). Revoca tutte le sessioni. Non eseguire su dati reali; lo script è bloccato con `NODE_ENV=production`.
 - Solo i 57 soggetti di training e i pazienti manuali sono visibili nelle viste operative, conteggi e API. I 15 soggetti di test restano nel database ma non sono accessibili tramite questi percorsi. L'assegnazione al singolo medico continua a valere.
 - Il medico può creare un paziente (assegnazione derivata dalla sessione), salvare nuovi test con 63 chiavi feature e ottenere la classe `H` (0) oppure `PD` (1).
+- Il medico può eliminare dalla lista un paziente manuale senza storico di trasferimenti, con conferma esplicita. L'operazione elimina test e risultati collegati e registra l'audit.
+- L'amministratore può eliminare un medico dalla console soltanto se non ha pazienti assegnati e non ha attività cliniche nello storico. Gli account con pazienti devono essere trasferiti prima, mentre gli eventi storici impediscono la cancellazione per mantenere la tracciabilità.
 - Per le misure sconosciute si usa `null`; un test interamente vuoto viene rifiutato. Le frazioni `_pct` devono essere tra 0 e 1. L'imputazione di dati mancanti non garantisce un risultato attendibile: usare acquisizioni complete ove possibile.
 - `POST /api/clinical/patients/:id/assessments/:assessmentId/predict` chiama Python internamente, valida il risultato e salva classe, versione del modello e data. Un nuovo controllo dell'ownership precede il salvataggio; un trasferimento intervenuto durante l'inferenza impedisce di restituire il risultato al vecchio medico.
 - Senza servizio o modello si restituisce 503: non si usa più una classe stub.
