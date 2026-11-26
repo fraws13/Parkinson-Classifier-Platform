@@ -7,6 +7,7 @@ export function createAdminRoutes(controller, authenticated) {
   router.get('/dashboard', controller.dashboard);
   router.get('/doctors', controller.listDoctors);
   router.post('/doctors', controller.registerDoctor);
+  router.delete('/doctors/:id', controller.deleteDoctor);
   router.get('/patients', controller.listPatients);
   router.post('/patients/:id/transfer', controller.transferPatient);
   return router;

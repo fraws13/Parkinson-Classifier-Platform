@@ -17,6 +17,26 @@ export function createAdminService(db) {
       });
       return publicUser(user);
     },
+    deleteDoctor(doctorId, actorId) {
+      return db.$transaction(async tx => {
+        const doctor = await tx.user.findFirst({ where: { id: doctorId, role: 'DOCTOR' }, select: { id: true, name: true } });
+        if (!doctor) return { status: 404, error: 'Medico non disponibile.' };
+
+        const patientCount = await tx.patient.count({ where: { doctorId } });
+        if (patientCount > 0) {
+          return { status: 409, error: 'Il medico ha pazienti assegnati. Trasferisci prima tutte le assegnazioni.' };
+        }
+
+        const activityCount = await tx.auditLog.count({ where: { actorId: doctorId } });
+        if (activityCount > 0) {
+          return { status: 409, error: 'Il medico ha attività nello storico e non può essere eliminato.' };
+        }
+
+        await tx.user.delete({ where: { id: doctorId } });
+        await tx.auditLog.create({ data: { actorId, action: 'DOCTOR_DELETED', targetId: doctorId } });
+        return { status: 204 };
+      });
+    },
     listPatients() {
       // Administrative metadata only: no clinical features or results.
       return db.patient.findMany({ where: operationalPatients, orderBy: { code: 'asc' }, select: { id: true, code: true, doctorId: true, doctor: { select: { id: true, name: true } } } });

@@ -34,6 +34,10 @@
 .page-heading > div { min-width: 0; }
 .page-heading p { font-size: 11px; color: var(--muted); margin-top: 13px; line-height: 1.8; }
 .page-heading > .button { flex-shrink: 0; }
+.assessment-actions { display: flex; flex-shrink: 0; flex-wrap: wrap; gap: 8px; }
+.assessment-actions input[hidden] { display: none; }
+.import-issues { overflow-wrap: anywhere; }
+.import-issues ul { margin: 6px 0 0; padding-left: 18px; }
 .live-line { display: flex; align-items: center; font-size: 9px; color: var(--muted); margin: 0 0 22px; }
 .live-line > span:last-child { margin-left: auto; color: var(--muted); font-size: 9px; }
 .dashboard-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 24px; }
@@ -100,6 +104,7 @@
   .secure-label { font-size: 0; gap: 0; }
   .content { padding: 27px 20px 0; }
   .page-heading { align-items: flex-start; flex-wrap: wrap; gap: 19px; }
+  .assessment-actions { flex-shrink: 1; }
   .page-heading h1 { font-size: 42px; }
   .page-heading p { line-height: 1.8; }
   .live-line { flex-wrap: wrap; line-height: 1.8; font-size: 9px; }

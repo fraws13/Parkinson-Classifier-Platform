@@ -12,6 +12,11 @@ export function createAdminController(adminService, dashboardService) {
       const doctor = await adminService.registerDoctor(newDoctor.parse(req.body), req.user.id);
       res.status(201).json({ doctor });
     },
+    async deleteDoctor(req, res) {
+      const result = await adminService.deleteDoctor(req.params.id, req.user.id);
+      if (result.error) return res.status(result.status).json({ error: result.error });
+      res.status(204).end();
+    },
     async listPatients(req, res) {
       res.json({ patients: await adminService.listPatients() });
     },
