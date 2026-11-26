@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { CircleHelp, FileHeart, Plus, ShieldCheck } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import { CircleHelp, FileHeart, Plus, ShieldCheck, Upload } from 'lucide-react';
 import { api } from '../../services/api';
 import { useLive } from '../../hooks/useLive';
 import { date, number } from '../../utils/format';
@@ -8,16 +8,48 @@ import ErrorNotice from '../../components/ErrorNotice';
 import Loading from '../../components/Loading';
 import AssessmentForm from '../../components/AssessmentForm';
 import { featureLabels } from '../../utils/features';
+import { readAssessmentJson } from '../../utils/assessmentImport';
 
 export default function PatientDetailPage({ id, onBack }) {
   const load = useCallback(() => api(`/clinical/patients/${id}`), [id]);
   const { data, error, refresh } = useLive(load);
   const [task, setTask] = useState(1);
   const [assessmentId, setAssessmentId] = useState('');
-  const [adding, setAdding] = useState(false);
+  const fileInput = useRef(null);
+  const [draft, setDraft] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importFeedback, setImportFeedback] = useState(null);
+  const [savingAssessment, setSavingAssessment] = useState(false);
   const [predicting, setPredicting] = useState(false);
   const [predictionError, setPredictionError] = useState('');
   const [result, setResult] = useState(null);
+
+  function closeDraft() {
+    setDraft(null);
+    setImportFeedback(null);
+  }
+
+  async function importJson(event) {
+    const file = event.currentTarget.files[0];
+    event.currentTarget.value = '';
+    if (!file || importing || savingAssessment) return;
+
+    setImporting(true);
+    setImportFeedback(null);
+    try {
+      const { importedValues, issues } = await readAssessmentJson(file, data.featureSchema.feature_names);
+      const count = Object.keys(importedValues).length;
+      if (count) {
+        setDraft(current => ({ ...current, ...importedValues }));
+        setResult(null);
+      }
+      setImportFeedback({ count, issues });
+    } catch (err) {
+      setImportFeedback({ error: err.message });
+    } finally {
+      setImporting(false);
+    }
+  }
 
   async function predict(assessment) {
     setPredicting(true); setPredictionError(''); setResult(null);
@@ -36,12 +68,45 @@ export default function PatientDetailPage({ id, onBack }) {
   return (
     <>
       <button className="text-button back-button" onClick={onBack}>← Tutti i pazienti</button>
-      <div className="page-heading"><div><div className="eyebrow">CARTELLA CLINICA · {patient.datasetSplit === 'TRAIN' ? 'DATASET TRAINING' : 'PAZIENTE MANUALE'}</div><h1>{patient.name || patient.code}</h1><p>{patient.code} · Test grafomotori del paziente assegnato.</p></div><button className="button secondary" onClick={() => { setAdding(true); setResult(null); }} disabled={adding}><Plus size={16} /> Aggiungi test</button></div>
+      <div className="page-heading">
+        <div><div className="eyebrow">CARTELLA CLINICA · {patient.datasetSplit === 'TRAIN' ? 'DATASET TRAINING' : 'PAZIENTE MANUALE'}</div><h1>{patient.name || patient.code}</h1><p>{patient.code} · Test grafomotori del paziente assegnato.</p></div>
+        <div className="assessment-actions">
+          <button type="button" className="button secondary" onClick={() => { setDraft({}); setImportFeedback(null); setResult(null); }} disabled={draft !== null || importing}><Plus size={16} /> Aggiungi test</button>
+          {patient.sourceSubjectId === null && (
+            <>
+              <button type="button" className="button secondary" onClick={() => fileInput.current?.click()} disabled={importing || savingAssessment}><Upload size={16} /> {importing ? 'Lettura JSON…' : 'Importa JSON'}</button>
+              <input ref={fileInput} type="file" accept=".json,application/json" aria-label="File JSON del test" hidden onChange={importJson} />
+            </>
+          )}
+        </div>
+      </div>
       <Badge tone="green"><ShieldCheck size={13} /> Accesso autorizzato</Badge>
-      {adding && <AssessmentForm patientId={id} featureSchema={data.featureSchema} onCancel={() => setAdding(false)} onSaved={async saved => { setAdding(false); setAssessmentId(saved.id); setResult(null); await refresh(); }} />}
+      {importFeedback?.count > 0 && <div className="notice success" role="status">{importFeedback.count} misure importate. Controlla le tre sezioni e premi Salva test.</div>}
+      <ErrorNotice>{importFeedback?.error || (importFeedback?.count === 0 && !(importFeedback?.issues?.length) ? 'Il file non contiene misure numeriche da importare.' : null)}</ErrorNotice>
+      {importFeedback?.issues?.length > 0 && (
+        <div className="notice error import-issues" role="alert">
+          <div>
+            <strong>Campi da correggere nel JSON</strong>
+            <ul>{importFeedback.issues.map(issue => <li key={issue}>{issue}</li>)}</ul>
+          </div>
+        </div>
+      )}
+      {draft !== null && (
+        <AssessmentForm
+          patientId={id}
+          featureSchema={data.featureSchema}
+          values={draft}
+          onChange={(name, value) => setDraft(current => ({ ...current, [name]: value }))}
+          importing={importing}
+          saving={savingAssessment}
+          onSavingChange={setSavingAssessment}
+          onCancel={closeDraft}
+          onSaved={async saved => { closeDraft(); setAssessmentId(saved.id); setResult(null); await refresh(); }}
+        />
+      )}
       <ErrorNotice>{predictionError}</ErrorNotice>
       {result && result.assessmentId === assessment?.id && <div className="notice success" role="status">Classe di appartenenza predetta: <strong>{result.label === 'PD' ? 'PD · Parkinson' : 'H · Controllo sano'}</strong></div>}
-      {!assessment ? <div className="empty">Nessun test disponibile. Aggiungi le misurazioni per usare Predict.</div> : (
+      {!assessment ? draft === null && <div className="empty">Nessun test disponibile. Aggiungi le misurazioni per usare Predict.</div> : (
         <>
           <div className="result-banner">
             <span className="result-icon"><FileHeart size={28} /></span>
